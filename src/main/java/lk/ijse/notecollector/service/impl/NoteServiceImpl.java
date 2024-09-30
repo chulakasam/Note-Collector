@@ -5,7 +5,9 @@ import lk.ijse.notecollector.customStatusCodes.SelectedUserErrorStatus;
 import lk.ijse.notecollector.dto.NoteDTO;
 import lk.ijse.notecollector.dto.NoteStatus;
 import lk.ijse.notecollector.entity.impl.NoteEntity;
+import lk.ijse.notecollector.entity.impl.UserEntity;
 import lk.ijse.notecollector.exceotion.DataPersistException;
+import lk.ijse.notecollector.exceotion.UserNotFoundException;
 import lk.ijse.notecollector.service.NoteService;
 import lk.ijse.notecollector.util.AppUtil;
 import lk.ijse.notecollector.util.Mapping;
@@ -15,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
 @Service
 @Transactional
 public class NoteServiceImpl implements NoteService {
@@ -38,7 +42,7 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public List<NoteDTO> getAllNotes() {
-        return null;
+        return noteMapping.asNoteDtoList(noteDao.findAll());
     }
 
     @Override
@@ -57,7 +61,12 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
-    public boolean deleteNote(String noteId) {
-        return false;
+    public void deleteNote(String noteId) {
+        Optional<NoteEntity> existedNote = noteDao.findById(noteId);
+        if(!existedNote.isPresent()){
+            throw new UserNotFoundException("Note with id " + noteId + " not found");
+        }else {
+            noteDao.deleteById(noteId);
+        }
     }
 }
