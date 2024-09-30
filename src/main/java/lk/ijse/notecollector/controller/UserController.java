@@ -1,15 +1,19 @@
 package lk.ijse.notecollector.controller;
 
 import lk.ijse.notecollector.dto.UserDTO;
+import lk.ijse.notecollector.exceotion.DataPersistException;
 import lk.ijse.notecollector.service.UserService;
 import lk.ijse.notecollector.service.impl.UserServiceImpl;
 import lk.ijse.notecollector.util.AppUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,7 +23,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping( consumes= MediaType.MULTIPART_FORM_DATA_VALUE, produces= MediaType.APPLICATION_JSON_VALUE)
-    public UserDTO saveUser(
+    public ResponseEntity<Void> saveUser(
            @RequestPart("firstname") String firstName,
            @RequestPart("lastname")String lastName,
            @RequestPart("email") String email,
@@ -37,20 +41,25 @@ public class UserController {
         try {
             byte [] bytesProPic = profilePic.getBytes();
             base64ProPic = AppUtil.profilePicToBase64(bytesProPic);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
 
-        //to do : build the object
-        UserDTO buildUserDTO = new UserDTO();
-        buildUserDTO.setUserId(userId);
-        buildUserDTO.setFirstName(firstName);
-        buildUserDTO.setLastName(lastName);
-        buildUserDTO.setEmail(email);
-        buildUserDTO.setPassword(password);
-        buildUserDTO.setProfilePic(base64ProPic);
-        userService.saveUser(buildUserDTO);
-        return buildUserDTO;
+            //to do : build the object
+            UserDTO buildUserDTO = new UserDTO();
+            buildUserDTO.setUserId(userId);
+            buildUserDTO.setFirstName(firstName);
+            buildUserDTO.setLastName(lastName);
+            buildUserDTO.setEmail(email);
+            buildUserDTO.setPassword(password);
+            buildUserDTO.setProfilePic(base64ProPic);
+            userService.saveUser(buildUserDTO);
+            //return buildUserDTO;
+
+            return new ResponseEntity<>(HttpStatus.CREATED);
+
+        }catch (DataPersistException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 
@@ -69,5 +78,35 @@ public class UserController {
     @GetMapping(produces=MediaType.APPLICATION_JSON_VALUE)
     public List<UserDTO> getAllUsers(){
         return userService.getAllUsers();
+    }
+
+    @PutMapping(value = "/{userId}" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void UpdateUser(
+            @RequestPart("firstname") String firstName,
+            @RequestPart("lastname") String lastName,
+            @RequestPart("email") String email,
+            @RequestPart("password") String password,
+            @RequestPart("profilePic") MultipartFile profilePic,
+            @PathVariable("userId") String userId){
+
+        String picToBase64="";
+        try {
+            byte[] bytesProPic = profilePic.getBytes();
+            picToBase64=AppUtil.profilePicToBase64(bytesProPic);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        var buildUserDTO=new UserDTO();
+        buildUserDTO.setUserId(userId);
+        buildUserDTO.setFirstName(firstName);
+        buildUserDTO.setLastName(lastName);
+        buildUserDTO.setEmail(email);
+        buildUserDTO.setPassword(password);
+        buildUserDTO.setProfilePic(picToBase64);
+
+        userService.updateUser(userId,buildUserDTO);
+
+
     }
 }

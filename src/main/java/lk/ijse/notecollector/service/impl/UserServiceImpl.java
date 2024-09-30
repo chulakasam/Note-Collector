@@ -3,6 +3,7 @@ package lk.ijse.notecollector.service.impl;
 import lk.ijse.notecollector.Dao.UserDao;
 import lk.ijse.notecollector.dto.UserDTO;
 import lk.ijse.notecollector.entity.impl.UserEntity;
+import lk.ijse.notecollector.exceotion.DataPersistException;
 import lk.ijse.notecollector.service.UserService;
 import lk.ijse.notecollector.util.Mapping;
 import org.modelmapper.ModelMapper;
@@ -23,9 +24,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private Mapping mapping;
     @Override
-    public UserDTO saveUser(UserDTO userDTO) {
-         UserEntity SaveUser= userDao.save(mapping.toUserEntity(userDTO));
-         return mapping.toUserDTO(SaveUser);
+    public void saveUser(UserDTO userDTO) {
+        UserEntity savedUser = userDao.save(mapping.toUserEntity(userDTO));
+        // mapping.toUserDTO(SaveUser);
+        if (savedUser == null) {
+            throw new DataPersistException("User not saved");
+        }
     }
 
     @Override
@@ -41,12 +45,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean updateUser(String userId, UserDTO userDTO) {
+    public boolean updateUser(String userId, UserDTO userDTO) {//204 - no content
+        Optional<UserEntity> tmpUser = userDao.findById(userId);
+        if(tmpUser.isPresent()){
+            tmpUser.get().setFirstName(userDTO.getFirstName());
+            tmpUser.get().setLastName(userDTO.getLastName());
+            tmpUser.get().setEmail(userDTO.getEmail());
+            tmpUser.get().setPassword(userDTO.getPassword());
+            tmpUser.get().setProfilePic(userDTO.getProfilePic());
+        }
         return false;
     }
 
+
     @Override
-    public void deleteUser(String userId) {
+    public void deleteUser(String userId) {//204 - no content
         userDao.deleteById(userId);
     }
 }
