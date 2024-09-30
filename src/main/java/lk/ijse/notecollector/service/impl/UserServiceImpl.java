@@ -1,9 +1,12 @@
 package lk.ijse.notecollector.service.impl;
 
 import lk.ijse.notecollector.Dao.UserDao;
+import lk.ijse.notecollector.customStatusCodes.SelectedUserErrorStatus;
 import lk.ijse.notecollector.dto.UserDTO;
+import lk.ijse.notecollector.dto.UserStatus;
 import lk.ijse.notecollector.entity.impl.UserEntity;
 import lk.ijse.notecollector.exceotion.DataPersistException;
+import lk.ijse.notecollector.exceotion.UserNotFoundException;
 import lk.ijse.notecollector.service.UserService;
 import lk.ijse.notecollector.util.Mapping;
 import org.modelmapper.ModelMapper;
@@ -39,9 +42,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO getUser(String userId) {
-        UserEntity userEntity = userDao.getReferenceById(userId);
-        return mapping.toUserDTO(userEntity);
+    public UserStatus getUser(String userId) {
+        if(userDao.existsById(userId)){
+            UserEntity selectedUser = userDao.getReferenceById(userId);
+            return mapping.toUserDTO(selectedUser);
+        }else {
+            return new SelectedUserErrorStatus(2, "User with id " + userId + " not found");
+        }
     }
 
     @Override
@@ -60,7 +67,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(String userId) {//204 - no content
-        userDao.deleteById(userId);
+        Optional<UserEntity> existedUser = userDao.findById(userId);
+        if(!existedUser.isPresent()){
+            throw new UserNotFoundException("User with id " + userId + " not found");
+        }else {
+            userDao.deleteById(userId);
+        }
     }
 }
 

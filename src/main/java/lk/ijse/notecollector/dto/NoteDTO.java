@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class NoteDTO implements SuperDTO {
+public class NoteDTO implements NoteStatus {
     private String noteId;
     private String noteTitle;
     private String noteDesc;

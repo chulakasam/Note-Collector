@@ -1,20 +1,23 @@
 package lk.ijse.notecollector.controller;
 
+import lk.ijse.notecollector.customStatusCodes.SelectedUserErrorStatus;
 import lk.ijse.notecollector.dto.UserDTO;
+import lk.ijse.notecollector.dto.UserStatus;
+import lk.ijse.notecollector.entity.impl.UserEntity;
 import lk.ijse.notecollector.exceotion.DataPersistException;
+import lk.ijse.notecollector.exceotion.UserNotFoundException;
 import lk.ijse.notecollector.service.UserService;
-import lk.ijse.notecollector.service.impl.UserServiceImpl;
 import lk.ijse.notecollector.util.AppUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("api/v1/users")
@@ -64,15 +67,37 @@ public class UserController {
 
 
     @GetMapping(value = "/{userId}",produces= MediaType.APPLICATION_JSON_VALUE)
-    public UserDTO getSelectedUser(@PathVariable("userId") String userId){
+    public UserStatus getSelectedUser(@PathVariable("userId") String userId){
+        String regexForUserID = "^USER-[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$";
+        Pattern regexPattern = Pattern.compile(regexForUserID);
+        var regexMatcher = regexPattern.matcher(userId);
+
+        if(!regexMatcher.matches()){
+            return new SelectedUserErrorStatus(1,"User ID is not valid");
+        }
         return userService.getUser(userId);
     }
 
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+
     @DeleteMapping(value = "/{userId}")
-    public void deleteUser(@PathVariable("userId") String userId){
-         userService.deleteUser(userId);
+    public  ResponseEntity<Void> deleteUser(@PathVariable("userId") String userId){
+        String regexForUserID = "^USER-[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$";
+        Pattern regexPattern = Pattern.compile(regexForUserID);
+        var regexMatcher = regexPattern.matcher(userId);
+        try {
+            if(!regexMatcher.matches()){
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            userService.deleteUser(userId);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }catch (UserNotFoundException e){
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping(produces=MediaType.APPLICATION_JSON_VALUE)
@@ -87,7 +112,9 @@ public class UserController {
             @RequestPart("email") String email,
             @RequestPart("password") String password,
             @RequestPart("profilePic") MultipartFile profilePic,
-            @PathVariable("userId") String userId){
+            @PathVariable("userId") String userId
+    )
+    {
 
         String picToBase64="";
         try {

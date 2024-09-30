@@ -9,7 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class UserDTO implements SuperDTO {
+public class UserDTO implements UserStatus {
     private String userId;
     private String firstName;
     private String lastName;

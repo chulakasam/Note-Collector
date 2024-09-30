@@ -1,37 +1,54 @@
 package lk.ijse.notecollector.service.impl;
 
+import lk.ijse.notecollector.Dao.NoteDao;
+import lk.ijse.notecollector.customStatusCodes.SelectedUserErrorStatus;
 import lk.ijse.notecollector.dto.NoteDTO;
+import lk.ijse.notecollector.dto.NoteStatus;
+import lk.ijse.notecollector.entity.impl.NoteEntity;
+import lk.ijse.notecollector.exceotion.DataPersistException;
 import lk.ijse.notecollector.service.NoteService;
 import lk.ijse.notecollector.util.AppUtil;
+import lk.ijse.notecollector.util.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 @Service
+@Transactional
 public class NoteServiceImpl implements NoteService {
-    private static List<NoteDTO> noteDTOList=new ArrayList<>();
-    NoteServiceImpl(){
-        noteDTOList.add(new NoteDTO("6f535d44-fc2b-49b2-bc62-a017d99dbc4e","python","fist week","2023-10-19","1","u001"));
-        noteDTOList.add(new NoteDTO("6f535d44-fc2b-49b2-bc62-a017d99dbc5e","java","second week","2023-10-26","2","u002"));
-        noteDTOList.add(new NoteDTO("6f535d44-fc2b-49b2-bc62-a017d99dbc6e","spring","third week","2023-11-13","3","u001"));
-        noteDTOList.add(new NoteDTO("6f535d44-fc2b-49b2-bc62-a017d99dbc7e","pascal","forth week","2023-10-20","4","u003"));
-    }
+
+    @Autowired
+    private NoteDao noteDao;
+    @Autowired
+    private Mapping noteMapping;
+
 
 
     @Override
-    public NoteDTO saveNote(NoteDTO noteDTO) {
+    public void saveNote(NoteDTO noteDTO) {
         noteDTO.setNoteId(AppUtil.generateNoteId());
-        return noteDTO;
+        NoteEntity savedNote =
+                noteDao.save(noteMapping.toNoteEntity(noteDTO));
+        if(savedNote == null){
+            throw new DataPersistException("Note not saved");
+        }
     }
 
     @Override
     public List<NoteDTO> getAllNotes() {
-        return noteDTOList;
+        return null;
     }
 
     @Override
-    public NoteDTO getNote(String noteId) {
-        return null;
+    public NoteStatus getNote(String noteId) {
+        if(noteDao.existsById(noteId)){
+            var selectedUser = noteDao.getReferenceById(noteId);
+            return noteMapping.toNoteDto(selectedUser);
+        }else {
+            return new SelectedUserErrorStatus(2,"Selected note not found");
+        }
     }
 
     @Override
