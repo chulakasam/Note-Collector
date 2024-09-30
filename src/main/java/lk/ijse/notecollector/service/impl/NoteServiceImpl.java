@@ -57,6 +57,13 @@ public class NoteServiceImpl implements NoteService {
 
     @Override
     public boolean updateNote(String noteId,NoteDTO noteDTO) {
+        Optional<NoteEntity> tmpUser = noteDao.findById(noteId);
+        if(tmpUser.isPresent()){
+            tmpUser.get().setNoteTitle(noteDTO.getNoteTitle());
+            tmpUser.get().setNoteDesc(noteDTO.getNoteDesc());
+            tmpUser.get().setCreatedDate(noteDTO.getCreatedDate());
+            tmpUser.get().setPriorityLevel(noteDTO.getPriorityLevel());
+        }
         return false;
     }
 

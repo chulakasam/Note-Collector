@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+
     @Override
     public boolean updateUser(String userId, UserDTO userDTO) {//204 - no content
         Optional<UserEntity> tmpUser = userDao.findById(userId);

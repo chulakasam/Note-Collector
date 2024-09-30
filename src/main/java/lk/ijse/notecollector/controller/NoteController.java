@@ -71,8 +71,21 @@ public class NoteController {
         }
     }
 
-    public void updateNote(String noteId, NoteDTO notedto){
 
+    @PutMapping(value = "/{noteId}")
+    public ResponseEntity<Void> updateNote(@PathVariable("noteId") String noteId, @RequestBody NoteDTO notedto){
+        String regexForUserID = "^NOTE-[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$";
+        Pattern regexPattern = Pattern.compile(regexForUserID);
+        var regexMatcher = regexPattern.matcher(noteId);
+        try {
+            if(!regexMatcher.matches()&&notedto==null){
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            noteService.updateNote(noteId,notedto);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 
